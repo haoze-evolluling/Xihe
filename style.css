@@ -2,6 +2,7 @@
 
 /* 变量定义 */
 :root {
+  /* 浅色模式变量 */
   --primary-color: #4a6fa5;
   --secondary-color: #6b8cae;
   --accent-color: #ff6b6b;
@@ -14,6 +15,24 @@
   --transition: all 0.3s ease;
   --input-bg: rgba(255, 255, 255, 0.9);
   --success-color: #4caf50;
+  --toggle-bg: #e4e7ec;
+  --toggle-circle: #fff;
+}
+
+/* 深色模式变量 */
+[data-theme="dark"] {
+  --primary-color: #6d8cb0;
+  --secondary-color: #8ba5c4;
+  --accent-color: #ff8585;
+  --text-color: #e4e4e4;
+  --light-text: #b0b0b0;
+  --bg-color: #1a1a1a;
+  --card-bg: rgba(40, 44, 52, 0.85);
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  --input-bg: rgba(50, 54, 62, 0.9);
+  --success-color: #5dc264;
+  --toggle-bg: #555;
+  --toggle-circle: #1a1a1a;
 }
 
 /* 全局样式 */
@@ -26,6 +45,7 @@
 
 body {
   background: url('./backgroud01.png') center center/cover no-repeat fixed;
+  background-color: var(--bg-color);
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -33,6 +53,38 @@ body {
   padding: 20px;
   color: var(--text-color);
   line-height: 1.6;
+}
+
+/* 深色模式切换按钮 */
+.theme-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 50px;
+  height: 26px;
+  border-radius: 15px;
+  background-color: var(--toggle-bg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0 3px;
+  transition: var(--transition);
+}
+
+.theme-toggle-circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--toggle-circle);
+  transition: var(--transition);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+}
+
+[data-theme="dark"] .theme-toggle-circle {
+  transform: translateX(24px);
 }
 
 /* 毛玻璃效果容器 */

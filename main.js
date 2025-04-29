@@ -1,6 +1,7 @@
 // 本地存储键名
 const STORAGE_KEY = 'daily_todos_v1';
 const CHECKED_DATE_KEY = 'daily_todos_checked_date_v1';
+const THEME_KEY = 'daily_todos_theme';
 
 function getTodayStr() {
   const now = new Date();
@@ -59,10 +60,43 @@ function renderTodos() {
   });
 }
 
+// 主题切换功能
+function initTheme() {
+  const savedTheme = localStorage.getItem(THEME_KEY);
+  const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+  
+  // 如果有保存的主题设置，使用保存的设置；否则根据系统偏好设置
+  if (savedTheme) {
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeToggle(savedTheme === 'dark');
+  } else if (prefersDarkScheme.matches) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    updateThemeToggle(true);
+  }
+}
+
+function updateThemeToggle(isDark) {
+  const themeToggleCircle = document.querySelector('.theme-toggle-circle');
+  themeToggleCircle.innerHTML = isDark ? '🌙' : '☀️';
+}
+
+function toggleTheme() {
+  const currentTheme = document.documentElement.getAttribute('data-theme');
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  
+  document.documentElement.setAttribute('data-theme', newTheme);
+  localStorage.setItem(THEME_KEY, newTheme);
+  updateThemeToggle(newTheme === 'dark');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   renderTodos();
+  initTheme();
+  
   const form = document.getElementById('todo-form');
   const input = document.getElementById('todo-input');
+  const themeToggle = document.getElementById('theme-toggle');
+  
   form.addEventListener('submit', e => {
     e.preventDefault();
     const text = input.value.trim();
@@ -73,4 +107,6 @@ document.addEventListener('DOMContentLoaded', () => {
     input.value = '';
     renderTodos();
   });
+  
+  themeToggle.addEventListener('click', toggleTheme);
 });
