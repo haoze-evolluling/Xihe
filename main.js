@@ -1,112 +1,129 @@
-// 本地存储键名
-const STORAGE_KEY = 'daily_todos_v1';
-const CHECKED_DATE_KEY = 'daily_todos_checked_date_v1';
-const THEME_KEY = 'daily_todos_theme';
+// 羲和 - 待办事项管理应用 JavaScript
 
-function getTodayStr() {
-  const now = new Date();
-  return now.getFullYear() + '-' + (now.getMonth() + 1) + '-' + now.getDate();
-}
+// DOM 元素
+const todoForm = document.getElementById('todo-form');
+const todoInput = document.getElementById('todo-input');
+const todoList = document.getElementById('todo-list');
+const themeToggle = document.getElementById('theme-toggle');
+const timeDisplay = document.getElementById('time-display');
+const timeElement = timeDisplay.querySelector('.time');
+const dateElement = timeDisplay.querySelector('.date');
 
-function loadTodos() {
-  let todos = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-  let checkedDate = localStorage.getItem(CHECKED_DATE_KEY);
-  const today = getTodayStr();
-  // 如果不是今天，清空所有勾选状态
-  if (checkedDate !== today) {
-    todos = todos.map(t => ({...t, checked: false}));
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
-    localStorage.setItem(CHECKED_DATE_KEY, today);
-  }
-  return todos;
-}
-
-function saveTodos(todos) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
-  localStorage.setItem(CHECKED_DATE_KEY, getTodayStr());
-}
-
-function renderTodos() {
-  const todos = loadTodos();
-  const list = document.getElementById('todo-list');
-  list.innerHTML = '';
-  todos.forEach((todo, idx) => {
-    const li = document.createElement('li');
-    li.className = 'todo-item' + (todo.checked ? ' completed' : '');
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.checked = !!todo.checked;
-    checkbox.addEventListener('change', () => {
-      todos[idx].checked = checkbox.checked;
-      saveTodos(todos);
-      renderTodos();
-    });
-    const label = document.createElement('label');
-    label.textContent = todo.text;
-    label.title = todo.text;
-    const delBtn = document.createElement('button');
-    delBtn.className = 'delete-btn';
-    delBtn.innerHTML = '🗑';
-    delBtn.title = '删除';
-    delBtn.addEventListener('click', () => {
-      todos.splice(idx, 1);
-      saveTodos(todos);
-      renderTodos();
-    });
-    li.appendChild(checkbox);
-    li.appendChild(label);
-    li.appendChild(delBtn);
-    list.appendChild(li);
-  });
-}
-
-// 主题切换功能
+// 初始化主题
 function initTheme() {
-  const savedTheme = localStorage.getItem(THEME_KEY);
-  const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  document.body.setAttribute('data-theme', savedTheme);
+}
+
+// 更新时间显示
+function updateTime() {
+  const now = new Date();
   
-  // 如果有保存的主题设置，使用保存的设置；否则根据系统偏好设置
-  if (savedTheme) {
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    updateThemeToggle(savedTheme === 'dark');
-  } else if (prefersDarkScheme.matches) {
-    document.documentElement.setAttribute('data-theme', 'dark');
-    updateThemeToggle(true);
+  // 格式化时间 (时:分:秒)
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  timeElement.textContent = `${hours}:${minutes}:${seconds}`;
+  
+  // 格式化日期 (年-月-日 星期几)
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+  const weekday = weekdays[now.getDay()];
+  dateElement.textContent = `${year}-${month}-${day} ${weekday}`;
+}
+
+// 切换主题
+function toggleTheme() {
+  const currentTheme = document.body.getAttribute('data-theme');
+  const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+  document.body.setAttribute('data-theme', newTheme);
+  localStorage.setItem('theme', newTheme);
+}
+
+// 添加新的待办事项
+function addTodo(e) {
+  e.preventDefault();
+  const todoText = todoInput.value.trim();
+  
+  if (todoText) {
+    createTodoItem(todoText);
+    saveTodos();
+    todoInput.value = '';
   }
 }
 
-function updateThemeToggle(isDark) {
-  const themeToggleCircle = document.querySelector('.theme-toggle-circle');
-  themeToggleCircle.innerHTML = isDark ? '🌙' : '☀️';
+// 创建待办事项元素
+function createTodoItem(text, completed = false) {
+  const li = document.createElement('li');
+  li.className = 'todo-item';
+  if (completed) li.classList.add('completed');
+  
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.checked = completed;
+  checkbox.addEventListener('change', toggleComplete);
+  
+  const label = document.createElement('label');
+  label.textContent = text;
+  
+  const deleteBtn = document.createElement('button');
+  deleteBtn.className = 'delete-btn';
+  deleteBtn.innerHTML = '&times;';
+  deleteBtn.addEventListener('click', deleteTodo);
+  
+  li.appendChild(checkbox);
+  li.appendChild(label);
+  li.appendChild(deleteBtn);
+  todoList.appendChild(li);
 }
 
-function toggleTheme() {
-  const currentTheme = document.documentElement.getAttribute('data-theme');
-  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-  
-  document.documentElement.setAttribute('data-theme', newTheme);
-  localStorage.setItem(THEME_KEY, newTheme);
-  updateThemeToggle(newTheme === 'dark');
+// 切换完成状态
+function toggleComplete() {
+  const todoItem = this.parentElement;
+  todoItem.classList.toggle('completed');
+  saveTodos();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  renderTodos();
-  initTheme();
-  
-  const form = document.getElementById('todo-form');
-  const input = document.getElementById('todo-input');
-  const themeToggle = document.getElementById('theme-toggle');
-  
-  form.addEventListener('submit', e => {
-    e.preventDefault();
-    const text = input.value.trim();
-    if (!text) return;
-    const todos = loadTodos();
-    todos.push({text, checked: false});
-    saveTodos(todos);
-    input.value = '';
-    renderTodos();
+// 删除待办事项
+function deleteTodo() {
+  const todoItem = this.parentElement;
+  todoItem.remove();
+  saveTodos();
+}
+
+// 保存待办事项到本地存储
+function saveTodos() {
+  const todos = [];
+  document.querySelectorAll('.todo-item').forEach(item => {
+    todos.push({
+      text: item.querySelector('label').textContent,
+      completed: item.classList.contains('completed')
+    });
   });
-  
-  themeToggle.addEventListener('click', toggleTheme);
-});
+  localStorage.setItem('todos', JSON.stringify(todos));
+}
+
+// 从本地存储加载待办事项
+function loadTodos() {
+  const todos = JSON.parse(localStorage.getItem('todos')) || [];
+  todos.forEach(todo => {
+    createTodoItem(todo.text, todo.completed);
+  });
+}
+
+// 事件监听器
+todoForm.addEventListener('submit', addTodo);
+themeToggle.addEventListener('click', toggleTheme);
+
+// 初始化应用
+function initApp() {
+  initTheme();
+  loadTodos();
+  updateTime();
+  setInterval(updateTime, 1000); // 每秒更新一次时间
+}
+
+// 当DOM加载完成后初始化应用
+document.addEventListener('DOMContentLoaded', initApp);
